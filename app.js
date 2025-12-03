@@ -3,6 +3,60 @@ const galleryElement = document.getElementById('gallery');
 const statusMessage = document.getElementById('statusMessage');
 const fetchButton = document.getElementById('fetchButton');
 const themeToggle = document.getElementById('themeToggle');
+let lightboxElement;
+
+function createLightbox() {
+  const lightbox = document.createElement('div');
+  lightbox.className = 'lightbox';
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'lightbox__backdrop';
+  lightbox.appendChild(backdrop);
+
+  const content = document.createElement('div');
+  content.className = 'lightbox__content';
+  content.setAttribute('role', 'dialog');
+  content.setAttribute('aria-modal', 'true');
+  content.setAttribute('aria-label', 'Full-size cat photo');
+
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'lightbox__close';
+  closeButton.setAttribute('aria-label', 'Close');
+  closeButton.innerHTML = '&times;';
+
+  const image = document.createElement('img');
+  image.className = 'lightbox__image';
+  image.alt = 'Full-size cat';
+
+  content.appendChild(closeButton);
+  content.appendChild(image);
+  lightbox.appendChild(content);
+
+  document.body.appendChild(lightbox);
+  return lightbox;
+}
+
+function getLightbox() {
+  if (!lightboxElement) {
+    lightboxElement = createLightbox();
+  }
+  return lightboxElement;
+}
+
+function openLightbox(url) {
+  const lightbox = getLightbox();
+  const image = lightbox.querySelector('.lightbox__image');
+  image.src = url;
+  lightbox.classList.add('is-visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  if (!lightboxElement) return;
+  lightboxElement.classList.remove('is-visible');
+  document.body.style.overflow = '';
+}
 
 /**
  * Fetch a random cat image from The Cat API (no key required for this demo).
@@ -32,17 +86,23 @@ function addCatToGallery(url) {
   const card = document.createElement('article');
   card.className = 'card';
 
+  const button = document.createElement('button');
+  button.className = 'card__trigger';
+  button.type = 'button';
+  button.dataset.fullImage = url;
+
   const image = document.createElement('img');
   image.src = url;
   image.alt = 'A randomly fetched cat';
   image.loading = 'lazy';
+  button.appendChild(image);
 
   const meta = document.createElement('div');
   meta.className = 'card__meta';
   const timestamp = new Date().toLocaleTimeString();
   meta.innerHTML = `<span class="badge">New</span><span>${timestamp}</span>`;
 
-  card.appendChild(image);
+  card.appendChild(button);
   card.appendChild(meta);
 
   galleryElement.prepend(card);
@@ -93,6 +153,25 @@ function init() {
   restoreThemePreference();
   fetchButton.addEventListener('click', handleFetchClick);
   themeToggle.addEventListener('click', toggleTheme);
+  galleryElement.addEventListener('click', (event) => {
+    const trigger = event.target.closest('.card__trigger');
+    if (!trigger) return;
+    const fullUrl = trigger.dataset.fullImage;
+    openLightbox(fullUrl);
+  });
+  document.addEventListener('click', (event) => {
+    if (!lightboxElement || !lightboxElement.classList.contains('is-visible')) return;
+    const isBackdrop = event.target.classList.contains('lightbox__backdrop');
+    const isCloseButton = event.target.classList.contains('lightbox__close');
+    if (isBackdrop || isCloseButton) {
+      closeLightbox();
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && lightboxElement?.classList.contains('is-visible')) {
+      closeLightbox();
+    }
+  });
 }
 
 init();
