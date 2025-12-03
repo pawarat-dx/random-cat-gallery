@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Random Cat Gallery</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <p class="eyebrow">A tiny Atlassian + GitHub Pages demo</p>
+        <h1>Random Cat Gallery</h1>
+        <p class="subtitle">Click the button to summon a random cat from the internet.</p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+        <span class="theme-toggle__icon" aria-hidden="true">🌗</span>
+        <span class="theme-toggle__label">Toggle theme</span>
+      </button>
+    </header>
+
+    <main>
+      <div class="controls">
+        <button class="primary" id="fetchButton" type="button">Get a new cat</button>
+        <p class="status" id="statusMessage" role="status">Ready for more cats.</p>
+      </div>
+
+      <section class="gallery" id="gallery" aria-live="polite" aria-label="Random cat gallery">
+        <!-- Images are injected here -->
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
