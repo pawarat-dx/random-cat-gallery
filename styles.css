@@ -75,6 +75,7 @@ h1 {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 button {
