@@ -59,11 +59,11 @@ function closeLightbox() {
 }
 
 /**
- * Fetch a random cat image from The Cat API (no key required for this demo).
- * @returns {Promise<string>} URL of the cat image.
+ * Fetch a random cat image (thumbnail) from The Cat API (no key required for this demo).
+ * @returns {Promise<{ id: string, thumbUrl: string }>} id and thumbnail URL.
  */
 async function fetchCatImage() {
-  const endpoint = 'https://api.thecatapi.com/v1/images/search?size=small';
+  const endpoint = 'https://api.thecatapi.com/v1/images/search?size=small&limit=1';
   const response = await fetch(endpoint);
 
   if (!response.ok) {
@@ -71,28 +71,52 @@ async function fetchCatImage() {
   }
 
   const data = await response.json();
-  if (!Array.isArray(data) || data.length === 0 || !data[0].url) {
+  if (!Array.isArray(data) || data.length === 0 || !data[0].url || !data[0].id) {
     throw new Error('Unexpected API response');
   }
 
-  return data[0].url;
+  return { id: data[0].id, thumbUrl: data[0].url };
+}
+
+/**
+ * Fetch a full-resolution cat image by id.
+ * @param {string} id - Cat image id.
+ * @returns {Promise<string>} URL of the high-res cat image.
+ */
+async function fetchFullCatImage(id) {
+  const endpoint = `https://api.thecatapi.com/v1/images/${id}`;
+  const response = await fetch(endpoint);
+
+  if (!response.ok) {
+    throw new Error(`Cat API returned ${response.status} for full image`);
+  }
+
+  const data = await response.json();
+  if (!data.url) {
+    throw new Error('Unexpected API response for full image');
+  }
+
+  return data.url;
 }
 
 /**
  * Add a new image card to the gallery and trim to the latest MAX_CATS.
- * @param {string} url - Image URL.
+ * @param {{ id: string, thumbUrl: string }} cat - Cat data with id and thumbnail URL.
  */
-function addCatToGallery(url) {
+function addCatToGallery(cat) {
   const card = document.createElement('article');
   card.className = 'card';
 
   const button = document.createElement('button');
   button.className = 'card__trigger';
   button.type = 'button';
-  button.dataset.fullImage = url;
+  button.dataset.catId = cat.id;
+  button.dataset.thumbImage = cat.thumbUrl;
 
   const image = document.createElement('img');
-  image.src = url;
+  image.src = cat.thumbUrl;
+  image.srcset = `${cat.thumbUrl} 1x, ${cat.thumbUrl} 2x`;
+  image.sizes = '(max-width: 600px) 100vw, 50vw';
   image.alt = 'A randomly fetched cat';
   image.loading = 'lazy';
   button.appendChild(image);
@@ -123,8 +147,8 @@ async function handleFetchClick() {
   fetchButton.disabled = true;
 
   try {
-    const catUrl = await fetchCatImage();
-    addCatToGallery(catUrl);
+    const cat = await fetchCatImage();
+    addCatToGallery(cat);
     showStatus('Here is your cat! Want another?');
   } catch (error) {
     console.error('Failed to fetch cat', error);
@@ -153,11 +177,31 @@ function init() {
   restoreThemePreference();
   fetchButton.addEventListener('click', handleFetchClick);
   themeToggle.addEventListener('click', toggleTheme);
-  galleryElement.addEventListener('click', (event) => {
+  galleryElement.addEventListener('click', async (event) => {
     const trigger = event.target.closest('.card__trigger');
     if (!trigger) return;
-    const fullUrl = trigger.dataset.fullImage;
-    openLightbox(fullUrl);
+    const cachedFull = trigger.dataset.fullImage;
+    if (cachedFull) {
+      openLightbox(cachedFull);
+      return;
+    }
+
+    const catId = trigger.dataset.catId;
+    const thumb = trigger.dataset.thumbImage;
+
+    try {
+      trigger.disabled = true;
+      // Show placeholder immediately while the high-res fetch happens.
+      if (thumb) openLightbox(thumb);
+      const fullUrl = await fetchFullCatImage(catId);
+      trigger.dataset.fullImage = fullUrl;
+      openLightbox(fullUrl);
+    } catch (error) {
+      console.error('Failed to load full-size cat image', error);
+      showStatus('Could not load the full-size cat right now.', true);
+    } finally {
+      trigger.disabled = false;
+    }
   });
   document.addEventListener('click', (event) => {
     if (!lightboxElement || !lightboxElement.classList.contains('is-visible')) return;
