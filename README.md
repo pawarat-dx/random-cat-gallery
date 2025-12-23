@@ -4,7 +4,7 @@ A tiny static page that fetches and shows random cats. It is intentionally minim
 
 ## Quick start
 
-Open `index.html` in a browser or serve the folder locally (e.g., `python -m http.server 8000`). Click **Get a new cat** to fetch a random photo. Toggle the light/dark theme with the 🌗 button.
+Open `index.html` directly in a browser. Click **Get a new cat** to fetch a random photo. Toggle the light/dark theme with the 🌗 button.
 
 ## Project structure
 
@@ -13,15 +13,29 @@ Open `index.html` in a browser or serve the folder locally (e.g., `python -m htt
 - `app.js` – Vanilla JS for fetching cats, updating the gallery, and toggling themes.
 - `.github/workflows/deploy.yml` – GitHub Actions workflow that syntax-checks the JavaScript and deploys to GitHub Pages.
 
-## Using with Jira
+## Cat API Integration
 
-Include Jira issue keys in your branches and commits so the GitHub for Jira app can connect activity back to issues:
+The application fetches random cat photos from **[The Cat API](https://thecatapi.com)** using a smart two-stage approach:
 
-- Branches: `feature/CAT-3-loading-state` or `bugfix/CAT-7-button-disabled`.
-- Commits: `[CAT-3] Add loading indicator to cat gallery`.
-- Pull requests: `[CAT-7] Fix button spacing on mobile`.
+### Two-Stage Fetch Process
 
-With this convention, Jira will automatically show related branches, commits, pull requests, and deployments on the issue once the GitHub for Jira app is installed in your site.
+**Stage 1: Thumbnail Fetch** (when clicking "Get a new cat")
+- Endpoint: `https://api.thecatapi.com/v1/images/search?size=small&limit=1`
+- Fetches small/thumbnail versions for fast gallery population
+- Returns both image URL and unique cat ID for later use
+
+**Stage 2: Full Resolution Fetch** (when clicking a cat image)
+- Endpoint: `https://api.thecatapi.com/v1/images/{id}`
+- Uses cat ID to fetch high-resolution version for lightbox viewing
+- Progressive loading: shows thumbnail immediately, then replaces with full-res
+
+### Performance Features
+
+- **Smart Caching**: Full-res URLs cached to avoid duplicate API calls
+- **Error Handling**: Graceful fallbacks with user-friendly error messages
+- **Loading States**: Visual feedback during fetch operations
+- **Gallery Limit**: Maximum of 9 cat pictures displayed (oldest automatically removed)
+- **No API Key Required**: Uses free tier perfect for demos
 
 ## Deployment notes
 

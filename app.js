@@ -3,7 +3,9 @@ const galleryElement = document.getElementById('gallery');
 const statusMessage = document.getElementById('statusMessage');
 const fetchButton = document.getElementById('fetchButton');
 const themeToggle = document.getElementById('themeToggle');
+const clearButton = document.getElementById('clearButton');
 let lightboxElement;
+let currentFetchController = null;
 
 function createLightbox() {
   const lightbox = document.createElement('div');
@@ -60,11 +62,12 @@ function closeLightbox() {
 
 /**
  * Fetch a random cat image (thumbnail) from The Cat API (no key required for this demo).
+ * @param {AbortSignal} signal - Optional abort signal to cancel the request
  * @returns {Promise<{ id: string, thumbUrl: string }>} id and thumbnail URL.
  */
-async function fetchCatImage() {
+async function fetchCatImage(signal) {
   const endpoint = 'https://api.thecatapi.com/v1/images/search?size=small&limit=1';
-  const response = await fetch(endpoint);
+  const response = await fetch(endpoint, { signal });
 
   if (!response.ok) {
     throw new Error(`Cat API returned ${response.status}`);
@@ -121,13 +124,7 @@ function addCatToGallery(cat) {
   image.loading = 'lazy';
   button.appendChild(image);
 
-  const meta = document.createElement('div');
-  meta.className = 'card__meta';
-  const timestamp = new Date().toLocaleTimeString();
-  meta.innerHTML = `<span class="badge">New</span><span>${timestamp}</span>`;
-
   card.appendChild(button);
-  card.appendChild(meta);
 
   galleryElement.prepend(card);
 
@@ -143,19 +140,60 @@ function showStatus(message, isError = false) {
 }
 
 async function handleFetchClick() {
+  // Cancel any ongoing fetch operation
+  if (currentFetchController) {
+    currentFetchController.abort();
+  }
+  
+  // Create new AbortController for this fetch
+  currentFetchController = new AbortController();
+  
   showStatus('Loading a new cat…');
   fetchButton.disabled = true;
 
   try {
-    const cat = await fetchCatImage();
-    addCatToGallery(cat);
-    showStatus('Here is your cat! Want another?');
+    const cat = await fetchCatImage(currentFetchController.signal);
+    // Only add to gallery if this request wasn't cancelled
+    if (!currentFetchController.signal.aborted) {
+      addCatToGallery(cat);
+      showStatus('Here is your cat! Want another?');
+    }
   } catch (error) {
-    console.error('Failed to fetch cat', error);
-    showStatus('Oops, something went wrong. Please try again.', true);
+    // Don't show error if request was just cancelled
+    if (error.name !== 'AbortError') {
+      console.error('Failed to fetch cat', error);
+      showStatus('Oops, something went wrong. Please try again.', true);
+    }
   } finally {
     fetchButton.disabled = false;
+    // Clear the controller if this was the current one
+    if (currentFetchController && !currentFetchController.signal.aborted) {
+      currentFetchController = null;
+    }
   }
+}
+
+function handleClearClick() {
+  // Abort any ongoing thumbnail fetch
+  try {
+    if (currentFetchController) {
+      currentFetchController.abort();
+      currentFetchController = null;
+    }
+  } catch (e) {
+    // no-op: abort may throw in some environments
+  }
+
+  // Close any open lightbox
+  closeLightbox();
+
+  // Clear all items from the gallery
+  while (galleryElement.firstChild) {
+    galleryElement.removeChild(galleryElement.firstChild);
+  }
+
+  // Update status message
+  showStatus('Gallery cleared. Ready for more cats.');
 }
 
 function toggleTheme() {
@@ -177,6 +215,7 @@ function init() {
   restoreThemePreference();
   fetchButton.addEventListener('click', handleFetchClick);
   themeToggle.addEventListener('click', toggleTheme);
+  clearButton.addEventListener('click', handleClearClick);
   galleryElement.addEventListener('click', async (event) => {
     const trigger = event.target.closest('.card__trigger');
     if (!trigger) return;
