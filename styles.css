@@ -49,6 +49,9 @@ body {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .eyebrow {
@@ -76,6 +79,9 @@ h1 {
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 20px;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 button {
@@ -101,6 +107,17 @@ button.primary:hover {
   box-shadow: 0 15px 40px rgba(92, 106, 196, 0.25);
 }
 
+button.secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+button.secondary:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
 .theme-toggle {
   background: var(--card);
   color: var(--text);
@@ -123,8 +140,10 @@ button.primary:hover {
 
 .gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .card {
@@ -135,6 +154,7 @@ button.primary:hover {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 200px;
 }
 
 .card__trigger {
@@ -158,22 +178,7 @@ button.primary:hover {
   display: block;
 }
 
-.card__meta {
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--muted);
-  font-size: 13px;
-}
 
-.badge {
-  background: rgba(92, 106, 196, 0.12);
-  color: var(--accent);
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-weight: 600;
-}
 
 .lightbox {
   position: fixed;
@@ -239,7 +244,19 @@ button.primary:hover {
     font-size: 28px;
   }
 
+  .gallery {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 400px;
+  }
+
   .card img {
     height: 160px;
+  }
+}
+
+@media (max-width: 400px) {
+  .gallery {
+    grid-template-columns: 1fr;
+    max-width: 300px;
   }
 }
