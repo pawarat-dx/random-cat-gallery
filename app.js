@@ -129,9 +129,16 @@ function addCatToGallery(cat) {
   galleryElement.prepend(card);
 
   // Trim gallery to the most recent items.
-  while (galleryElement.children.length > MAX_CATS) {
+  while (galleryElement.querySelectorAll('.card').length > MAX_CATS) {
     galleryElement.removeChild(galleryElement.lastElementChild);
   }
+
+  updateEmptyState();
+}
+
+function updateEmptyState() {
+  const hasCards = galleryElement.querySelectorAll('.card').length > 0;
+  galleryElement.classList.toggle('has-cats', hasCards);
 }
 
 function showStatus(message, isError = false) {
@@ -191,6 +198,8 @@ function handleClearClick() {
   while (galleryElement.firstChild) {
     galleryElement.removeChild(galleryElement.firstChild);
   }
+
+  updateEmptyState();
 
   // Update status message
   showStatus('Gallery cleared. Ready for more cats.');
