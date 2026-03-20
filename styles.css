@@ -260,3 +260,17 @@ button.secondary:hover {
     max-width: 300px;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+
+  button {
+    transition: none;
+  }
+
+  button:active {
+    transform: none;
+  }
+}
